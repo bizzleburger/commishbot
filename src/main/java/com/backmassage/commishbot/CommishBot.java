@@ -7,11 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.backmassage.commishbot.domain.Matchup;
+import com.backmassage.commishbot.repository.MatchupRepository;
+import com.mysql.jdbc.log.Log;
 import com.ullink.slack.simpleslackapi.SlackMessageHandle;
 import com.ullink.slack.simpleslackapi.SlackSession;
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted;
@@ -23,27 +27,35 @@ public class CommishBot {
 
 	private final static Logger log = LoggerFactory.getLogger(CommishBot.class);
 	private final String auth_token = "xoxb-8341226887-cydkQGLSlafMolYxbHTPGnjz";
+	
+	@Inject
+	private MatchupRepository matchupRepo;
 
 	@PostConstruct
 	public void botStuff() {
-		Map<String, ArrayList<String>> matchups = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> schedule = new ArrayList<String>();
-		schedule.add("Chris J");
-		schedule.add("Kevin");
-		schedule.add("Max");
-		schedule.add("Chandos");
-		schedule.add("Stephen");
-		schedule.add("Max");
-		schedule.add("Chandos");
-		schedule.add("Chris J");
-		schedule.add("Josh");
-		schedule.add("Kevin");
-		schedule.add("Larry");
-		schedule.add("Chris L");
-		schedule.add("Adrienne");
-		matchups.put("brandon", schedule);
-		matchups.put("chris", schedule);
+//		Map<String, ArrayList<String>> matchups = new HashMap<String, ArrayList<String>>();
+//		ArrayList<String> schedule = new ArrayList<String>();
+//		schedule.add("Chris J");
+//		schedule.add("Kevin");
+//		schedule.add("Max");
+//		schedule.add("Chandos");
+//		schedule.add("Stephen");
+//		schedule.add("Max");
+//		schedule.add("Chandos");
+//		schedule.add("Chris J");
+//		schedule.add("Josh");
+//		schedule.add("Kevin");
+//		schedule.add("Larry");
+//		schedule.add("Chris L");
+//		schedule.add("Adrienne");
+//		matchups.put("brandon", schedule);
+//		matchups.put("chris", schedule);
 
+		List<Matchup> schedule = matchupRepo.findAll();
+		for (Matchup m: schedule){
+			log.debug(m.getTeam());
+		}
+		
 		SlackSession session = SlackSessionFactory.createWebSocketSlackSession(auth_token);
 		session.addMessagePostedListener(new SlackMessagePostedListener() {
 			@Override
@@ -57,8 +69,9 @@ public class CommishBot {
 						log.debug("user " + message.getSender().getUserName());
 						int week = Integer.parseInt(message.getMessageContent().split(" ")[1]);
 						log.debug("week " + week);
-						String match = matchups.get(message.getSender().getUserName()).get(week-1);
-						session.sendMessage(session.findChannelByName("bot_testing"), match, null);
+						session.sendMessage(session.findChannelByName("bot_testing"), matchupRepo.findOne((long)1).getTeam(), null);
+						//String match = schedule.get(message.getSender().getUserName()).get(week-1);
+						//session.sendMessage(session.findChannelByName("bot_testing"), match, null);
 					}
 				}
 
